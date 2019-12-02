@@ -9,10 +9,10 @@ import matplotlib.pyplot as plt
 
 # deezer
 def get_deezer():
-    r = requests.get("https://api.deezer.com/chart/0?&output=json")
-    data = r.text
-    deezer = json.loads(data)
-    return deezer
+    r = requests.get("https://api.deezer.com/chart/0?&output=json")
+    data = r.text
+    deezer = json.loads(data)
+    return deezer
 
 
 # spotify:
@@ -21,14 +21,6 @@ secret = "bd63a7354a6a4285a7d46bfb737daadb"
 
 client_credentials_manager = SpotifyClientCredentials(client_id=cid, client_secret=secret)
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
-
-
-# cur.execute("SELECT * FROM BILLBOARD_TOP")
-# artist_dict = {}
-# for row in cur:
-#     artist = row[1]
-#     artist_dict[artist] = artist_dict.get(artist, 0) + 1
-
 
 conn = sqlite3.connect('Spotify_top.sqlite')
 cur = conn.cursor()
