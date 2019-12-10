@@ -136,6 +136,14 @@ def make_deezer_data(cur, conn):
 
     return deezer_dict
 
+def deezer_artists_count(cur, conn):
+    deezer = make_deezer_data(cur, conn)
+    print(deezer)
+    cur.execute("CREATE TABLE IF NOT EXISTS Deezer_Artist_Count (count INTEGER PRIMARY KEY, artist TEXT UNIQUE)")
+    #why is this not adding anything to the database? everything is in deezer, but it doesn't add to table.
+    for i in range(0, len(deezer)):
+        cur.execute("INSERT OR REPLACE INTO Deezer_Artist_Count (count, artist) VALUES (?,?)",(deezer[i][1],deezer[i][0]))
+
 def make_graph_deezer(cur, conn):
 #deezer graph
     deezer_dict = make_deezer_data(cur, conn)
@@ -218,6 +226,7 @@ def main():
 
     word_cloud_deezer(cur, conn)
     word_cloud_spotify(cur, conn)
+    deezer_artists_count(cur, conn)
 
 if __name__ == "__main__":
     main()
