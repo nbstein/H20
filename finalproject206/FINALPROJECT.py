@@ -18,9 +18,7 @@ def get_deezer():
     return deezer
 
 def deezer_database(d, cur, conn):
-    # conn = sqlite3.connect('deezer_top.sqlite')
-    # cur = conn.cursor()
-    # cur.execute('DROP TABLE IF EXISTS deezer_top')
+
     cur.execute('CREATE TABLE IF NOT EXISTS deezer_top(title TEXT UNIQUE, artist TEXT)')
     d = d["tracks"]["data"]
     deezer_artist_ids = []
@@ -51,9 +49,6 @@ def spotify_database(deezer_artist_ids, cur, conn):
     client_credentials_manager = SpotifyClientCredentials(client_id=cid, client_secret=secret)
     sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
-    # conn = sqlite3.connect('Spotify_top.sqlite')
-    # cur = conn.cursor()
-    # cur.execute('DROP TABLE IF EXISTS Spotify_top')
     cur.execute('CREATE TABLE IF NOT EXISTS Spotify_top(title TEXT UNIQUE, artist TEXT)')
     num = cur.execute("SELECT COUNT (*) FROM Spotify_top")
     info = num.fetchall()[0][0]
