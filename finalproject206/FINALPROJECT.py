@@ -21,27 +21,17 @@ def deezer_database(d, cur, conn):
 
     cur.execute('CREATE TABLE IF NOT EXISTS deezer_top(title TEXT UNIQUE, artist TEXT)')
     d = d["tracks"]["data"]
-    deezer_artist_ids = []
 
     num = cur.execute("SELECT COUNT (*) FROM deezer_top")
     info = num.fetchall()[0][0]
     for i in range(info,info+20):
         title = d[i]["title"]
         artist = d[i]["artist"]["name"]
-        if artist not in deezer_artist_ids:
-            deezer_artist_ids.append(artist)
         cur.execute("INSERT OR IGNORE INTO deezer_top (title, artist) VALUES (?, ?)", (title, artist))
 
-    cur.execute("CREATE TABLE IF NOT EXISTS Deezer_Artist_ids (id INTEGER PRIMARY KEY, artist TEXT, UNIQUE(id, artist))")
-    num2 = cur.execute("SELECT COUNT (*) FROM Deezer_Artist_ids")
-    info2 = num2.fetchall()[0][0]
-    for i in range(info2, len(deezer_artist_ids)+info2):
-        cur.execute("INSERT OR IGNORE INTO Deezer_Artist_ids (id,artist) VALUES (?,?)",(i,deezer_artist_ids[i-info2]))
-
     conn.commit()
-    return deezer_artist_ids
 
-def spotify_database(deezer_artist_ids, cur, conn):
+def spotify_database(cur, conn):
 # spotify:
     cid = "28678d88fa6b4267aaa4d49045c23920"
     secret = "bd63a7354a6a4285a7d46bfb737daadb"
@@ -58,14 +48,6 @@ def spotify_database(deezer_artist_ids, cur, conn):
             __title = t['name'] 
             __artist = t['artists'][0]['name']
             cur.execute("INSERT OR IGNORE INTO Spotify_top (title, artist) VALUES (?, ?)", (__title, __artist))
-            if __artist not in deezer_artist_ids:
-                deezer_artist_ids.append(__artist)
-    cur.execute("CREATE TABLE IF NOT EXISTS Spotify_Artist_ids (id INTEGER PRIMARY KEY, artist TEXT, UNIQUE(id, artist))")
-    num2 = cur.execute("SELECT COUNT (*) FROM Spotify_Artist_ids")
-    info2 = num2.fetchall()[0][0]
-    for i in range(info2,len(deezer_artist_ids)+info2):
-        cur.execute("INSERT OR IGNORE INTO Spotify_Artist_ids (id,artist) VALUES (?,?)",(i,deezer_artist_ids[i-info2]))
-
     conn.commit()
 
 def make_spotify_data(cur, conn):
@@ -133,15 +115,39 @@ def make_deezer_data(cur, conn):
 
 def deezer_artists_count(cur, conn):
     deezer = make_deezer_data(cur, conn)
-    print(deezer)
-    cur.execute("CREATE TABLE IF NOT EXISTS Deezer_Artist_Count (count INTEGER, artist TEXT )")
-    #why is this not adding anything to the database? everything is in deezer, but it doesn't add to table.
+    cur.execute("CREATE TABLE IF NOT EXISTS Deezer_Artist_Count (count INTEGER, artist TEXT PRIMARY KEY UNIQUE)")
     for i in range(0, len(deezer)):
         try:
-            cur.execute("INSERT OR IGNORE INTO Deezer_Artist_Count (count, artist) VALUES (?,?)",(deezer[i][1],deezer[i][0]))
+            cur.execute("INSERT OR REPLACE INTO Deezer_Artist_Count (count, artist) VALUES (?,?)",(deezer[i][1],deezer[i][0]))
         except:
-            print("Something went wrong")
+            print("bad")
     conn.commit()
+
+def spotify_artists_count(cur, conn):
+    spotify = make_spotify_data(cur, conn)
+    cur.execute("CREATE TABLE IF NOT EXISTS Spotify_Artist_Count (count INTEGER, artist TEXT PRIMARY KEY UNIQUE)")
+    for i in range(0, len(spotify)):
+        try:
+            cur.execute("INSERT OR REPLACE INTO Spotify_Artist_Count (count, artist) VALUES (?,?)",(spotify[i][1],spotify[i][0]))
+        except:
+            print("bad")
+    conn.commit()
+
+def join_counts(cur, conn):
+    cur.execute("SELECT Spotify_Artist_Count.count, Spotify_Artist_Count.artist, Deezer_Artist_Count.count, Deezer_Artist_Count.artist FROM Spotify_Artist_Count LEFT JOIN Deezer_Artist_Count ON Spotify_Artist_Count.artist=Deezer_Artist_Count.artist UNION ALL SELECT Deezer_Artist_Count.count, Deezer_Artist_Count.artist, Spotify_Artist_Count.count, Spotify_Artist_Count.artist FROM Deezer_Artist_Count LEFT JOIN Spotify_Artist_Count ON Deezer_Artist_Count.artist=Spotify_Artist_Count.artist")
+    file = open("total_counts.txt", "w")
+    file.write("Artists and their # hits total on Spotify and Deezer's top 100 combined\n")
+    for row in cur.fetchall():
+        if not (row[0] and row[2]):
+            if (row[0]):
+                sentence = (str(row[1]) + " is only in one of the top 100 lists, with " + str(row[0]) + " hits.")
+                file.write("{} \n".format(sentence))
+        else:
+            total_hits = row[0] + row[2]
+            sentence = (str(row[1]) + " has " + str(total_hits) + " total hits on Spotify and Deezer's top 100 hits combined.")
+            file.write("{} \n".format(sentence))
+    
+
 
 
 def make_graph_deezer(cur, conn):
@@ -218,15 +224,18 @@ def main():
     conn = sqlite3.connect("data.sqlite")
     cur = conn.cursor()
 
-    db = deezer_database(deezer_data, cur, conn)
-    spotify_database(db, cur, conn)
+    deezer_database(deezer_data, cur, conn)
+    spotify_database(cur, conn)
+
+    deezer_artists_count(cur, conn)
+    spotify_artists_count(cur, conn)
+    join_counts(cur, conn)
 
     make_graph_spotify(cur, conn)
     make_graph_deezer(cur, conn)
 
     word_cloud_deezer(cur, conn)
     word_cloud_spotify(cur, conn)
-    deezer_artists_count(cur, conn)
 
 if __name__ == "__main__":
     main()
