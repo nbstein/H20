@@ -72,31 +72,15 @@ def make_graph_spotify(cur, conn):
     for item in spotify_artist_dict:
         new_dict[item[0]] = item[1]
 
-#Assign the x values to the keys of the dictionary and the y values to the values that correspond to those keys
     x_values = new_dict.keys()
     y_values = new_dict.values() 
-
-#Plot the bar chart with xvals and yvals. Align the bars in center and assign a color to each bar.
     index = np.arange(len(x_values))
     plt.bar(index, y_values, align='center', width =2.0, color = ["green"])
-
-#Give ylabel to the plot
     plt.ylabel("Number of Songs on Spotify Top 100 by Artist")
-
-#Give xlabel to the plot
     plt.xlabel("Artist")
-
-#Give the title to the plot
     plt.title("Number of Hits on Spotify Top 100 by Artist") 
-
-#Adjust the placement of the x-axis labels 
     plt.xticks(index, x_values, rotation=90, fontsize = 4) 
-
-
-#Save the plot as a .png file
     plt.savefig("spotify_artists.png")
-
-# Show the plot
     plt.show()
 
 def make_deezer_data(cur, conn):
@@ -146,9 +130,6 @@ def join_counts(cur, conn):
             total_hits = row[0] + row[2]
             sentence = (str(row[1]) + " has " + str(total_hits) + " total hits on Spotify and Deezer's top 100 hits combined.")
             file.write("{} \n".format(sentence))
-    
-
-
 
 def make_graph_deezer(cur, conn):
 #deezer graph
@@ -156,30 +137,15 @@ def make_graph_deezer(cur, conn):
     new_dict = {}
     for item in deezer_dict:
         new_dict[item[0]] = item[1]
-#Assign the x values to the values of the dictionary and the y values to the keys that correspond
     x_values = new_dict.keys()
     y_values = new_dict.values() 
-
-#Plot the bar chart with x & y. Align the bars in center and make bars green.
     index = np.arange(len(x_values))
     plt.bar(index, y_values, align='center', width =2.0, color = ["magenta"])
-
-#Give ylabel to the plot
     plt.xlabel("Artist")
-
-#Give xlabel to the plot
     plt.ylabel("Number of Songs on Deezer Top 100 by Artist")
-
-#Give the title to the plot
     plt.title("Number of Hits on Deezer Top 100 by Artist") 
-
-#Adjust the placement of the x-axis labels 
     plt.xticks(index, x_values, rotation=90, fontsize = 4) 
-
-#Save the plot as a .png file
     plt.savefig("deezer_artists.png")
-
-# Show the plot
     plt.show()
 
 def word_cloud_deezer(cur, conn):
